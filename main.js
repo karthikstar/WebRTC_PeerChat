@@ -9,6 +9,15 @@ let uid = String(Math.floor(Math.random() * 10000)) // every single user in the 
 let client;
 let channel; // this is the channel that 2 users will join. this will allow messages to be sent to this channel
 
+//11. parse url and get the room value
+let queryString = window.location.search
+let urlParams = new URLSearchParams(queryString)
+let roomId = urlParams.get('room') // this will get the id in the route link
+
+//11.1 if theres no roomid entered we want to redirect them back to the correct room first
+if(!roomId){
+    window.location = 'lobby.html'
+}
 
 
 // create variable for local stream and one for remote stream
@@ -35,7 +44,7 @@ let init = async () => {
 
     // index.html?room=234234
     // 3.9 create channel
-    channel = client.createChannel('main') //will find a channel by this name or create it
+    channel = client.createChannel(roomId) //11.3 updated to pass in dynamic roomId instead
     await channel.join() // join the channel
 
     // 4.0 listen for whenever any other client actually joins the same channel
