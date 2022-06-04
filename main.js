@@ -1,5 +1,5 @@
 // 3.6 Adding signalling with Agora RTM
-let APP_ID = "3e7555c434a74488883b830a97e7dfb1";
+// let APP_ID = "3e7555c434a74488883b830a97e7dfb1";
 let token = null;
 
 // 3.7 generate some kind of random uid
@@ -48,7 +48,7 @@ let constraints = {
 let init = async () => {
     
     //3.8 create client object 
-    client = await AgoraRTM.createInstance(APP_ID)
+    client = await AgoraRTM.createInstance(config.APP_ID)
     await client.login({uid, token})
 
     // index.html?room=234234
