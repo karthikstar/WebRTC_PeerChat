@@ -35,6 +35,15 @@ const servers = { // pass this object into RTCPeerConnection
         } 
     ]
 }
+//15. create constraints to improve video quality
+let constraints = {
+    video: {
+        width: {min:640,ideal:1920, max:1920}, //set min width as 640 set idea as 1920
+        height: {min:480, ideal:1080, max:1080},
+    },
+    audio:true
+}
+
 // 1. create this first.
 let init = async () => {
     
@@ -56,7 +65,7 @@ let init = async () => {
     client.on('MessageFromPeer', handleMessageFromPeer) // anytime someone calls the sendMessageToPeer() to us
     
     //1.1 ask for permission to access our camera and video
-    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false}) // will req permission to our camera feed and audio
+    localStream = await navigator.mediaDevices.getUserMedia(constraints) // will req permission to our camera feed and audio
     //1.1 above, we want access to camera, but NOT audio
     document.getElementById('user-1').srcObject = localStream // video tag has a property called srcObject
 }
@@ -66,6 +75,9 @@ let handleUserLeft = (MemberId) => {
     // when a user tries to leave here, we are actl not leaving the channel.
     // by default if agora detects no activity for 20-30s, then that user left will be triggered
     // we want to log the user out asap - check pt 10.
+
+    //14.1 remove the class when user left
+    document.getElementById('user-1').classList.remove('smallFrame')
 }
 
 // 4.2 create event listener fn to handle message from a peer
@@ -73,18 +85,18 @@ let handleMessageFromPeer = async (message, MemberId) => {
     message = JSON.parse(message.text)
     console.log('Message:',message)
     //6. check message type
-    if(message.type == 'offer'){
+    if(message.type === 'offer'){
         //6.1 if offer, we take in memberid and offer as param, to create a answer
         createAnswer(MemberId, message.offer)
     }
 
-    if(message.type == 'answer'){
+    if(message.type === 'answer'){
         // 6.2 handle when we receive a message type - answer
         // process the answer received
         addAnswer(message.answer)
     }
     //8. both peers will send out candidates so we need to handle this message type
-    if(message.type == 'candidate'){
+    if(message.type === 'candidate'){
         if(peerConnection){
             peerConnection.addIceCandidate(message.candidate)
         }
@@ -105,6 +117,9 @@ let createPeerConnection = async (MemberId) => {
     document.getElementById('user-2').srcObject = remoteStream 
     document.getElementById('user-2').style.display = 'block' 
     
+    //14.add class of smallFrame to our vidoe (peer 1)
+    document.getElementById('user-1').classList.add('smallFrame')
+
     if(!localStream){
         localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false}) // will req permission to our camera feed and audio    
         document.getElementById('user-1').srcObject = localStream
@@ -209,8 +224,44 @@ let leaveChannel = async () => {
     await channel.leave() // leave channel
     await client.logout() // logout as a user
 }
+
+// 12. adding functionalities for buttons in index.html
+// 12.1 Toggle Camera fn
+let toggleCamera = async () => {
+    // look inside of localStream and loop thru all tracks, and look specifically for track with vidoe 
+    let videoTrack = localStream.getTracks().find(track => track.kind === 'video')
+    if(videoTrack.enabled){
+        videoTrack.enabled = false // if video track currently enabled, we want to disable it. and turn off camera
+        document.getElementById('camera-btn').style.backgroundColor = 'rgb(255, 80, 80)' // set to red
+    } else {
+        // if currently not enabled
+        videoTrack.enabled = true //enable video track
+        document.getElementById('camera-btn').style.backgroundColor = 'rgb(179, 102, 249, .9)' // set to purple
+    }
+}
+
+// 13.1 Toggle Mic fn
+let toggleMic = async () => {
+    // look inside of localStream and loop thru all tracks, and look specifically for track with audio 
+    let audioTrack = localStream.getTracks().find(track => track.kind === 'audio')
+    if(audioTrack.enabled){
+        audioTrack.enabled = false // if audio track currently enabled, we want to disable it. and turn off camera
+        document.getElementById('mic-btn').style.backgroundColor = 'rgb(255, 80, 80)' // set to red
+    } else {
+        // if currently not enabled
+        audioTrack.enabled = true //enable audio track
+        document.getElementById('mic-btn').style.backgroundColor = 'rgb(179, 102, 249, .9)' // set to purple
+    }
+}
+
 // 10.1 ensure user leaves when their window actl closes
 window.addEventListener('beforeunload',leaveChannel) // anytime a user closes the window, or close his laptop, then we leave channel
+
+//12.2 add event listener for camera btn
+document.getElementById('camera-btn').addEventListener('click',toggleCamera)
+
+//13.2 add event listener for mic btn
+document.getElementById('mic-btn').addEventListener('click',toggleMic)
 
 init()
 
